@@ -68,7 +68,7 @@ public class SecurityConfig {
         DefaultBearerTokenResolver headerResolver = new DefaultBearerTokenResolver();
 
         return request -> {
-            // Login/signup must work even if an old, expired cookie is still in the browser.
+
             if (request.getRequestURI().startsWith("/api/auth/")) {
                 return null;
             }

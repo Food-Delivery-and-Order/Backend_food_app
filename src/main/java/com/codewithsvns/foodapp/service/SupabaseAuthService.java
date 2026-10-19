@@ -22,7 +22,6 @@ import java.util.UUID;
 @Service
 public class SupabaseAuthService {
 
-    // Names of the cookies we set in the browser.
     public static final String ACCESS_COOKIE = "sb-access-token";
     public static final String REFRESH_COOKIE = "sb-refresh-token";
     public static final String VERIFIER_COOKIE = "pkce-verifier";
@@ -45,19 +44,14 @@ public class SupabaseAuthService {
         this.backendUrl = stripTrailingSlash(backendUrl);
         this.passwordResetRedirectUrl = passwordResetRedirectUrl;
 
-        // Every request to Supabase Auth must carry the project's public (anon) key.
+
         this.supabase = RestClient.builder()
                 .baseUrl(this.supabaseUrl)
                 .defaultHeader("apikey", anonKey)
                 .build();
     }
 
-    // ---------------------------------------------------------------
-    // Email + password
-    // ---------------------------------------------------------------
 
-    /** Creates the account. The result contains "access_token" only if
-     *  Supabase email confirmation is turned off. */
     public Map<String, Object> signUp(String name, String email, String password) {
         return post("/auth/v1/signup", Map.of(
                 "email", normalizeEmail(email),
@@ -82,18 +76,16 @@ public class SupabaseAuthService {
                 passwordResetRedirectUrl);
     }
 
-    // ---------------------------------------------------------------
-    // Google / Facebook (PKCE = Proof Key for Code Exchange)
-    // ---------------------------------------------------------------
 
-    /** Random secret that only our server knows until the login finishes. */
+
+
     public String generateCodeVerifier() {
         byte[] randomBytes = new byte[64];
         new SecureRandom().nextBytes(randomBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
     }
 
-    /** SHA-256 fingerprint of the verifier; this is what we send to Supabase first. */
+
     public String toCodeChallenge(String verifier) {
         try {
             byte[] hash = MessageDigest.getInstance("SHA-256")
@@ -104,7 +96,7 @@ public class SupabaseAuthService {
         }
     }
 
-    /** The Supabase URL that sends the user to Google or Facebook. */
+
     public String buildSocialLoginUrl(String provider, String codeChallenge) {
         return UriComponentsBuilder
                 .fromUriString(supabaseUrl + "/auth/v1/authorize")
@@ -117,18 +109,14 @@ public class SupabaseAuthService {
                 .toUriString();
     }
 
-    /** Swaps the one-time "code" from the callback for real tokens. */
+
     public Map<String, Object> exchangeCode(String code, String verifier) {
         return post("/auth/v1/token?grant_type=pkce", Map.of(
                 "auth_code", code,
                 "code_verifier", verifier));
     }
 
-    // ---------------------------------------------------------------
-    // Profile row
-    // ---------------------------------------------------------------
 
-    /** Creates the user_profiles row on first login (does nothing if it exists). */
     public void createProfileIfMissing(Map<String, Object> session) {
         Map<?, ?> user = (Map<?, ?>) session.get("user");
         UUID userId = UUID.fromString(String.valueOf(user.get("id")));
@@ -168,9 +156,7 @@ public class SupabaseAuthService {
         return null;
     }
 
-    // ---------------------------------------------------------------
-    // HTTP helper + error translation
-    // ---------------------------------------------------------------
+
 
     private Map<String, Object> post(String path, Object body, Object... uriVariables) {
         try {
@@ -238,7 +224,7 @@ public class SupabaseAuthService {
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 
-    /** Error that carries the HTTP status and a message the frontend can show. */
+
     public static class AuthException extends RuntimeException {
         private final HttpStatus status;
 

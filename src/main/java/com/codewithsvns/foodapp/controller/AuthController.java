@@ -58,9 +58,7 @@ public class AuthController {
         this.cookieSameSite = cookieSameSite;
     }
 
-    // ---------------------------------------------------------------
-    // Email + password
-    // ---------------------------------------------------------------
+
 
     @PostMapping("/signup")
     public ResponseEntity<Map<String, String>> signUp(
@@ -70,7 +68,7 @@ public class AuthController {
         Map<String, Object> result = authService.signUp(
                 request.name().trim(), request.email(), request.password());
 
-        // No access token means Supabase is waiting for the user to confirm their email.
+
         if (result.get("access_token") == null) {
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "message", "Account created. Please check your email to verify "
@@ -123,7 +121,7 @@ public class AuthController {
         try {
             authService.sendPasswordReset(request.email());
         } catch (AuthException ex) {
-            // Always give the same answer so nobody can discover which emails are registered.
+
             log.warn("Password reset request failed: {}", ex.getMessage());
         }
 
@@ -131,9 +129,6 @@ public class AuthController {
                 "If an account matches that email, password-reset instructions will be sent."));
     }
 
-    // ---------------------------------------------------------------
-    // Google / Facebook
-    // ---------------------------------------------------------------
 
     @GetMapping("/google")
     public void loginWithGoogle(HttpServletResponse response) throws IOException {
@@ -145,7 +140,7 @@ public class AuthController {
         startSocialLogin("facebook", response);
     }
 
-    /** Supabase sends the browser back here after Google/Facebook login. */
+
     @GetMapping("/callback")
     public void socialCallback(
             @RequestParam(required = false) String code,
@@ -155,7 +150,7 @@ public class AuthController {
             String verifier,
             HttpServletResponse response) throws IOException {
 
-        // The verifier is single-use, so remove it straight away.
+
         addCookie(response, SupabaseAuthService.VERIFIER_COOKIE, "", 0, AUTH_PATH);
 
         if (error != null) {
@@ -177,9 +172,7 @@ public class AuthController {
         }
     }
 
-    // ---------------------------------------------------------------
-    // Helpers
-    // ---------------------------------------------------------------
+
 
     private void startSocialLogin(String provider, HttpServletResponse response)
             throws IOException {
@@ -211,8 +204,8 @@ public class AuthController {
     private void addCookie(HttpServletResponse response, String name, String value,
                            long maxAgeSeconds, String path) {
         ResponseCookie cookie = ResponseCookie.from(name, value)
-                .httpOnly(true)          // JavaScript cannot read it
-                .secure(cookieSecure)    // true when the site is served over HTTPS
+                .httpOnly(true)
+                .secure(cookieSecure)
                 .sameSite(cookieSameSite)
                 .path(path)
                 .maxAge(maxAgeSeconds)
@@ -226,9 +219,7 @@ public class AuthController {
                 + URLEncoder.encode(message, StandardCharsets.UTF_8));
     }
 
-    // ---------------------------------------------------------------
-    // Error responses in the {"message": "..."} shape the frontend reads
-    // ---------------------------------------------------------------
+
 
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<Map<String, String>> handleAuthException(AuthException ex) {
